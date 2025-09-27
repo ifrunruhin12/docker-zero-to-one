@@ -1,0 +1,39 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: testdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mynet
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgres://admin:secret@db:5432/testdb?sslmode=disable
+    depends_on:
+      - db
+    networks:
+      - mynet
+
+  web:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    networks:
+      - mynet
+
+volumes:
+  db_data:
+
+networks:
+  mynet:
